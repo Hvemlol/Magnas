@@ -1,0 +1,23 @@
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: 'Tahoma', 'MS Sans Serif', system-ui, -apple-system, sans-serif;
+  background: #c0c0c0;
+  color: #000000;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: #000080; }
+
+/* Subtle hover lift on all buttons */
+button { transition: filter 0.1s ease; }
+button:hover:not(:disabled) { filter: brightness(1.07); }
+button:active:not(:disabled) { filter: brightness(0.94); }
+
+/* Table row hover */
+tbody tr:hover td { background-color: #e4e1d9 !important; }
+
+/* Link hover */
+a:hover { opacity: 0.78; }

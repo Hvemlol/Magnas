@@ -1,0 +1,8 @@
+# Normalize line endings to LF on commit, checkout as-is on Windows
+* text=auto eol=lf
+*.cs text eol=lf
+*.jsx text eol=lf
+*.js text eol=lf
+*.json text eol=lf
+*.md text eol=lf
+*.csproj text eol=lf
