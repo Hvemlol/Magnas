@@ -32,6 +32,9 @@ export default function ProjectDetail() {
   const [inviteInput, setInviteInput] = useState('');
   const [inviteError, setInviteError] = useState('');
 
+  // Action errors (replaces alert())
+  const [actionError, setActionError] = useState('');
+
   // Rename group
   const [renamingGroupId, setRenamingGroupId] = useState(null);
   const [renameValue, setRenameValue]         = useState('');
@@ -69,7 +72,7 @@ export default function ProjectDetail() {
       const res = await api.put(`/projects/${id}`, headerForm);
       setProject(p => ({ ...p, name: res.data.name, description: res.data.description, location: res.data.location }));
       setEditingHeader(false);
-    } catch { alert('Failed to save.'); }
+    } catch { setActionError('Failed to save.'); }
   }
 
   // ── Groups ──────────────────────────────────────────────────
@@ -81,7 +84,7 @@ export default function ProjectDetail() {
       setProject(p => ({ ...p, groups: [...p.groups, res.data] }));
       setNewGroupName('');
       setAddingGroup(false);
-    } catch { alert('Failed to add group.'); }
+    } catch { setActionError('Failed to add group.'); }
   }
 
   async function renameGroup(groupId) {
@@ -90,7 +93,7 @@ export default function ProjectDetail() {
       const res = await api.put(`/projects/${id}/groups/${groupId}`, { name: renameValue.trim() });
       setProject(p => ({ ...p, groups: p.groups.map(g => g.id === groupId ? { ...g, name: res.data.name } : g) }));
       setRenamingGroupId(null);
-    } catch { alert('Failed to rename group.'); }
+    } catch { setActionError('Failed to rename group.'); }
   }
 
   async function deleteGroup(groupId) {
@@ -102,7 +105,7 @@ export default function ProjectDetail() {
         groups: p.groups.filter(g => g.id !== groupId),
         products: p.products.map(pp => pp.groupId === groupId ? { ...pp, groupId: null, groupName: null } : pp)
       }));
-    } catch { alert('Failed to delete group.'); }
+    } catch { setActionError('Failed to delete group.'); }
   }
 
   // ── Products ────────────────────────────────────────────────
@@ -122,7 +125,7 @@ export default function ProjectDetail() {
           ? { ...item, groupId: newGroupId ?? null, groupName: group?.name ?? null }
           : item)
       }));
-    } catch { alert('Failed to move product.'); }
+    } catch { setActionError('Failed to move product.'); }
   }
 
   async function updateNotes(ppId, notes) {
@@ -131,7 +134,7 @@ export default function ProjectDetail() {
     try {
       await api.patch(`/projects/${id}/products/${ppId}`, { groupId: pp.groupId ?? null, notes });
       setProject(p => ({ ...p, products: p.products.map(item => item.id === ppId ? { ...item, notes } : item) }));
-    } catch { alert('Failed to update notes.'); }
+    } catch { setActionError('Failed to update notes.'); }
   }
 
   async function removeProduct(ppId) {
@@ -139,7 +142,7 @@ export default function ProjectDetail() {
     try {
       await api.delete(`/projects/${id}/products/${ppId}`);
       setProject(p => ({ ...p, products: p.products.filter(item => item.id !== ppId) }));
-    } catch { alert('Failed to remove product.'); }
+    } catch { setActionError('Failed to remove product.'); }
   }
 
   async function removeElement(peId) {
@@ -147,7 +150,7 @@ export default function ProjectDetail() {
     try {
       await api.delete(`/projects/${id}/elements/${peId}`);
       setProject(p => ({ ...p, projectElements: p.projectElements.filter(pe => pe.id !== peId) }));
-    } catch { alert('Failed to remove element.'); }
+    } catch { setActionError('Failed to remove element.'); }
   }
 
   // ── Members ──────────────────────────────────────────────────
@@ -170,7 +173,7 @@ export default function ProjectDetail() {
     try {
       await api.delete(`/projects/${id}/members/${memberId}`);
       setProject(p => ({ ...p, members: p.members.filter(m => m.id !== memberId) }));
-    } catch { alert('Failed to remove member.'); }
+    } catch { setActionError('Failed to remove member.'); }
   }
 
   // ── Derived ─────────────────────────────────────────────────
@@ -254,6 +257,13 @@ export default function ProjectDetail() {
             )}
             <button style={s.addProductsBtn} onClick={() => setShowModal(true)}>+ Add products</button>
           </div>
+        </div>
+      )}
+
+      {actionError && (
+        <div style={s.actionError}>
+          {actionError}
+          <button style={s.actionErrorDismiss} onClick={() => setActionError('')}>✕</button>
         </div>
       )}
 
@@ -379,7 +389,7 @@ export default function ProjectDetail() {
                                     await api.patch(`/projects/${id}/elements/${pe.id}`, { groupId: newGroupId, notes: pe.notes });
                                     const group = newGroupId ? project.groups.find(g => g.id === newGroupId) : null;
                                     setProject(p => ({ ...p, projectElements: p.projectElements.map(item => item.id === pe.id ? { ...item, groupId: newGroupId, groupName: group?.name ?? null } : item) }));
-                                  } catch { alert('Failed to move element.'); }
+                                  } catch { setActionError('Failed to move element.'); }
                                 }}
                               >
                                 <option value="">Ungrouped</option>
@@ -663,6 +673,9 @@ const s = {
   headerEditBtns:{ display: 'flex', gap: '8px' },
   saveBtn:       { padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#000080', color: '#ffffff', cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' },
   cancelBtn:     { padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#d4d0c8', color: '#000000', cursor: 'pointer', fontFamily: 'inherit' },
+
+  actionError:        { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', color: '#c00000', fontSize: '0.85rem', background: '#ffe0e0', border: '1px solid #c62828', padding: '6px 10px', marginBottom: '14px' },
+  actionErrorDismiss: { background: 'none', border: 'none', cursor: 'pointer', color: '#c00000', fontSize: '0.85rem', padding: '0 2px', fontFamily: 'inherit', lineHeight: 1 },
 
   groupBar:      { marginBottom: '18px' },
   addGroupBtn:   { padding: '5px 14px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#d4d0c8', cursor: 'pointer', fontSize: '0.85rem', color: '#000000', fontFamily: 'inherit' },

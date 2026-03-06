@@ -16,6 +16,7 @@ export default function ProductDetail() {
   const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     api.get(`/products/${id}`)
@@ -40,7 +41,7 @@ export default function ProductDetail() {
     try {
       const res = await api.post('/saved', { productId: product.id });
       setSavedId(res.data.id);
-    } catch (e) { alert(e.response?.data?.error ?? 'Failed to save.'); }
+    } catch (e) { setActionError(e.response?.data?.error ?? 'Failed to save.'); }
     finally { setBusy(false); }
   }
 
@@ -49,7 +50,7 @@ export default function ProductDetail() {
     try {
       await api.delete(`/saved/${savedId}`);
       setSavedId(null);
-    } catch { alert('Failed to unsave.'); }
+    } catch { setActionError('Failed to unsave.'); }
     finally { setBusy(false); }
   }
 
@@ -124,6 +125,7 @@ export default function ProductDetail() {
               ? <button style={s.savedBtn} disabled={busy} onClick={handleUnsave}>✓ Saved</button>
               : <button style={s.saveBtn}  disabled={busy} onClick={handleSave}>Save product</button>
             }
+            {actionError && <div style={s.actionError}>{actionError}</div>}
           </div>
         )}
       </div>
@@ -459,6 +461,7 @@ const s = {
   description:   { margin: 0, fontSize: '0.92rem', color: '#404040', lineHeight: 1.7 },
   saveBtn:       { padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#000080', color: '#ffffff', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', fontFamily: 'inherit' },
   savedBtn:      { padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#d4d0c8', color: '#2e7d32', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', fontFamily: 'inherit' },
+  actionError:   { color: '#c00000', fontSize: '0.8rem', background: '#ffe0e0', border: '1px solid #c62828', padding: '4px 8px', maxWidth: '180px', textAlign: 'right' },
 
   // Layout
   body:          { display: 'grid', gridTemplateColumns: '1fr 300px', gap: '18px', alignItems: 'start' },
