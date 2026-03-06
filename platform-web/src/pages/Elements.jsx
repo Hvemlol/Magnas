@@ -171,8 +171,13 @@ export default function Elements() {
       const newElement = res.data;
       // Attach any pre-selected products
       for (const p of formSelProducts) {
-        try { await api.post(`/elements/${newElement.id}/products`, { productId: p.id }); }
-        catch {}
+        try {
+          await api.post(`/elements/${newElement.id}/products`, {
+            productId: p.id,
+            amount: p.amount !== '' ? parseFloat(p.amount) : null,
+            unit: p.unit || null,
+          });
+        } catch {}
       }
       setElements(prev => [{ ...newElement, productCount: formSelProducts.length }, ...prev]);
       setForm({ name: '', description: '', bim7aaCategory: '2', bim7aaSubcategory: '', typeNumber: '', status: '' });
@@ -387,7 +392,7 @@ export default function Elements() {
                       style={alreadyAdded ? s.prodResultAdded : s.prodResult}
                       onClick={() => {
                         if (!alreadyAdded) {
-                          setFormSelProducts(prev => [...prev, p]);
+                          setFormSelProducts(prev => [...prev, { ...p, amount: '', unit: 'stk' }]);
                           setFormProdSearch('');
                           setFormProdResults([]);
                         }
@@ -403,16 +408,41 @@ export default function Elements() {
               </div>
             )}
             {formSelProducts.length > 0 && (
-              <div style={s.prodChips}>
+              <div style={s.prodList}>
                 {formSelProducts.map(p => (
-                  <span key={p.id} style={s.prodChip}>
-                    {p.name}
+                  <div key={p.id} style={s.prodListRow}>
+                    <span style={s.prodListName}>{p.name}</span>
+                    {p.category && <span style={s.prodResultMeta}>{p.category}</span>}
+                    <input
+                      style={s.prodAmountInput}
+                      type="number"
+                      min="0"
+                      step="any"
+                      placeholder="Amount"
+                      value={p.amount}
+                      onChange={e => setFormSelProducts(prev =>
+                        prev.map(sp => sp.id === p.id ? { ...sp, amount: e.target.value } : sp)
+                      )}
+                    />
+                    <select
+                      style={s.prodUnitSelect}
+                      value={p.unit}
+                      onChange={e => setFormSelProducts(prev =>
+                        prev.map(sp => sp.id === p.id ? { ...sp, unit: e.target.value } : sp)
+                      )}
+                    >
+                      <option value="stk">stk</option>
+                      <option value="m">m</option>
+                      <option value="m2">m²</option>
+                      <option value="mm">mm</option>
+                      <option value="kg">kg</option>
+                    </select>
                     <button
                       type="button"
-                      style={s.prodChipRemove}
+                      style={s.prodListRemove}
                       onClick={() => setFormSelProducts(prev => prev.filter(sp => sp.id !== p.id))}
                     >✕</button>
-                  </span>
+                  </div>
                 ))}
               </div>
             )}
@@ -1026,9 +1056,12 @@ const s = {
   prodResultAdded: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '5px 10px', border: 'none', borderBottom: '1px solid #e8e6e0', background: '#f0eeea', cursor: 'default', textAlign: 'left', fontFamily: 'inherit', fontSize: '0.85rem', color: '#808080' },
   prodResultName:  { fontWeight: 600, color: '#000000', flexShrink: 0 },
   prodResultMeta:  { fontSize: '0.78rem', color: '#808080' },
-  prodChips:       { display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' },
-  prodChip:        { display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#000080', color: '#ffffff', padding: '2px 8px', fontSize: '0.8rem', fontWeight: 600 },
-  prodChipRemove:  { background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '0 2px', fontSize: '0.78rem', lineHeight: 1, fontFamily: 'inherit' },
+  prodList:        { display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' },
+  prodListRow:     { display: 'flex', alignItems: 'center', gap: '8px', background: '#ece9e0', border: '1px solid #9a9790', padding: '4px 8px' },
+  prodListName:    { fontWeight: 700, fontSize: '0.85rem', color: '#000000', flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' },
+  prodAmountInput: { width: '72px', border: '1px solid #9a9790', background: '#ffffff', color: '#000000', padding: '2px 6px', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', flexShrink: 0 },
+  prodUnitSelect:  { border: '1px solid #9a9790', background: '#ffffff', color: '#000000', padding: '2px 4px', fontSize: '0.85rem', fontFamily: 'inherit', outline: 'none', flexShrink: 0 },
+  prodListRemove:  { background: 'none', border: 'none', cursor: 'pointer', color: '#808080', fontSize: '0.82rem', padding: '0 2px', lineHeight: 1, fontFamily: 'inherit', flexShrink: 0 },
   sortActive:  { color: '#000000', marginLeft: '3px', fontSize: '0.68rem' },
   sortInactive:{ color: '#808080', marginLeft: '3px', fontSize: '0.68rem' },
 };

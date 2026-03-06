@@ -66,6 +66,11 @@ public class AddProductToElementRequest
 
     [StringLength(1000)]
     public string? Notes { get; set; }
+
+    public decimal? Amount { get; set; }
+
+    [StringLength(50)]
+    public string? Unit { get; set; }
 }
 
 // -- Response types ------------------------------------------------------------
@@ -133,6 +138,8 @@ public record ElementDetailDto
 public record ElementProductEntryDto(
     int                  Id,
     string?              Notes,
+    decimal?             Amount,
+    string?              Unit,
     ProductInElementDto  Product);
 
 public record ProductInElementDto(

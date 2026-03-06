@@ -101,6 +101,8 @@ public class ElementService : IElementService
             Products              = e.ElementProducts.Select(ep => new ElementProductEntryDto(
                 ep.Id,
                 ep.Notes,
+                ep.Amount,
+                ep.Unit,
                 new ProductInElementDto(
                     ep.Product.Id,
                     ep.Product.Name,
@@ -217,7 +219,7 @@ public class ElementService : IElementService
         var already = await _db.ElementProducts.AnyAsync(ep => ep.ElementId == elementId && ep.ProductId == req.ProductId);
         if (already) return ServiceResult<ElementProductEntryDto>.Fail(ServiceError.Conflict, "Product is already in this element.");
 
-        var ep = new ElementProduct { ElementId = elementId, ProductId = req.ProductId, Notes = req.Notes?.Trim() };
+        var ep = new ElementProduct { ElementId = elementId, ProductId = req.ProductId, Notes = req.Notes?.Trim(), Amount = req.Amount, Unit = req.Unit?.Trim() };
         _db.ElementProducts.Add(ep);
         await _db.SaveChangesAsync();
 
@@ -225,7 +227,7 @@ public class ElementService : IElementService
         await _db.Entry(ep.Product).Reference(x => x.Manufacturer).LoadAsync();
 
         return ServiceResult<ElementProductEntryDto>.Ok(new ElementProductEntryDto(
-            ep.Id, ep.Notes,
+            ep.Id, ep.Notes, ep.Amount, ep.Unit,
             new ProductInElementDto(
                 ep.Product.Id, ep.Product.Name, ep.Product.Category, ep.Product.Material,
                 ep.Product.FireRating, ep.Product.GwpA1A3, ep.Product.GwpB4, ep.Product.GwpB6,

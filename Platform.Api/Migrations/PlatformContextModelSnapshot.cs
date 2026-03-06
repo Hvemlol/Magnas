@@ -97,6 +97,9 @@ namespace Platform.Api.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
+                    b.Property<decimal?>("Amount")
+                        .HasColumnType("TEXT");
+
                     b.Property<int>("ElementId")
                         .HasColumnType("INTEGER");
 
@@ -105,6 +108,10 @@ namespace Platform.Api.Migrations
 
                     b.Property<int>("ProductId")
                         .HasColumnType("INTEGER");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
