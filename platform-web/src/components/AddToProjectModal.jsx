@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 
 /**
@@ -39,7 +40,8 @@ export default function AddToProjectModal({
   // Load projects list (product-first mode)
   useEffect(() => {
     if (isProductFirst) {
-      api.get('/projects').then(res => setProjects(res.data)).catch(() => {});
+      api.get('/projects').then(res => setProjects(res.data))
+        .catch(() => setError('Failed to load your projects. Please close and try again.'));
     }
   }, [isProductFirst]);
 
@@ -49,7 +51,7 @@ export default function AddToProjectModal({
     setLoadingGroups(true);
     api.get(`/projects/${selProjectId}`)
       .then(res => setSelGroups(res.data.groups ?? []))
-      .catch(() => setSelGroups([]))
+      .catch(() => { setSelGroups([]); setError('Failed to load project subgroups. Please reselect the project.'); })
       .finally(() => setLoadingGroups(false));
   }, [selProjectId, isProductFirst]);
 
@@ -57,10 +59,11 @@ export default function AddToProjectModal({
   useEffect(() => {
     if (isProductFirst || !search.trim()) { setSearchResults([]); return; }
     const t = setTimeout(() => {
+      setError('');
       setSearching(true);
       api.get(`/products?search=${encodeURIComponent(search.trim())}`)
         .then(res => setSearchResults((res.data ?? []).slice(0, 8)))
-        .catch(() => {})
+        .catch(() => setError('Search failed. Please try again.'))
         .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(t);
@@ -232,6 +235,18 @@ export default function AddToProjectModal({
     </>
   );
 }
+
+AddToProjectModal.propTypes = {
+  productId: PropTypes.number,
+  productName: PropTypes.string,
+  projectId: PropTypes.number,
+  projectGroups: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  })),
+  onClose: PropTypes.func.isRequired,
+  onAdded: PropTypes.func,
+};
 
 const s = {
   backdrop:      { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200 },

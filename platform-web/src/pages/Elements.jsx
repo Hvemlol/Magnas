@@ -1,51 +1,8 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-
-const BIM7AA = {
-  0: 'Generiske objekter',
-  1: 'Bygningsbasis',
-  2: 'Primære bygningsdele',
-  3: 'Kompletterende bygningsdele',
-  4: 'Overfladebygningsdele',
-  5: 'VVS- og Ventilationsanlæg',
-  6: 'El- og mekaniske anlæg',
-  7: 'Inventar og teknisk udstyr',
-  8: 'Beplantning og belægning',
-  9: 'Projektudstyr',
-};
-
-const BIM7AA_SUB = {
-  '0.1': 'Generiske bygningsdele',
-  '1.1': 'Fundering og terrændæk',
-  '1.2': 'Kælder og sokkel',
-  '2.1': 'Ydervægge',
-  '2.2': 'Indervægge',
-  '2.3': 'Dækkonstruktioner',
-  '2.4': 'Tagkonstruktioner',
-  '2.5': 'Søjler og dragere',
-  '3.1': 'Vinduer og yderdøre',
-  '3.2': 'Facadebeklædning',
-  '3.3': 'Lofter og altaner',
-  '4.1': 'Gulvbelægninger',
-  '4.2': 'Vægbeklædninger',
-  '4.3': 'Loftbeklædninger',
-  '4.4': 'Facadebeklædninger',
-  '5.1': 'Varmeanlæg',
-  '5.2': 'Ventilationsanlæg',
-  '5.3': 'Vand- og afløbsanlæg',
-  '5.4': 'Køleanlæg',
-  '6.1': 'Elinstallationer',
-  '6.2': 'IT og svagstrømsanlæg',
-  '6.3': 'Brand og sikringsanlæg',
-  '7.1': 'Inventar og udstyr',
-  '7.2': 'Løst inventar',
-  '7.3': 'Teknisk udstyr',
-  '8.1': 'Beplantning',
-  '8.2': 'Hårde belægninger',
-  '8.3': 'Udendørs udstyr',
-  '9.1': 'Projektudstyr',
-};
+import { BIM7AA, BIM7AA_SUB } from '../utils/bim7aa';
+import { gwpColour } from '../utils/colours';
 
 const STATUS_NAMES = { 1: 'Aktiv', 2: 'Under review', 3: 'Godkendt' };
 const STATUS_MAP   = {
@@ -58,13 +15,6 @@ function getSubcats(cat) {
   return Object.entries(BIM7AA_SUB)
     .filter(([k]) => k.startsWith(`${cat}.`))
     .map(([k, v]) => ({ code: k, label: v }));
-}
-
-function gwpColour(v) {
-  if (v < 0)   return { color: '#2e7d32', bg: '#e8f5e9' };
-  if (v < 50)  return { color: '#1565c0', bg: '#e3f2fd' };
-  if (v < 150) return { color: '#e65100', bg: '#fff3e0' };
-  return               { color: '#c62828', bg: '#ffebee' };
 }
 
 function relDate(dateStr) {
@@ -92,6 +42,7 @@ export default function Elements() {
   const navigate = useNavigate();
   const [elements, setElements] = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   // Filters
   const [filterCat, setFilterCat]             = useState(null);
@@ -126,7 +77,7 @@ export default function Elements() {
 
   async function load() {
     try { setElements((await api.get('/elements')).data); }
-    catch {}
+    catch { setLoadError('Failed to load elements. Please refresh the page.'); }
     finally { setLoading(false); }
   }
 
@@ -267,7 +218,8 @@ export default function Elements() {
 
   const subcats = getSubcats(parseInt(form.bim7aaCategory));
 
-  if (loading) return <div style={s.state}>Loading…</div>;
+  if (loading)   return <div style={s.state}>Loading…</div>;
+  if (loadError) return <div style={s.state}>{loadError}</div>;
 
   return (
     <div style={s.page}>

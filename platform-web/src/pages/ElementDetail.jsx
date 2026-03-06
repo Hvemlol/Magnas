@@ -1,52 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 import AddElementToProjectModal from '../components/AddElementToProjectModal';
-
-const BIM7AA = {
-  0: 'Generiske objekter',
-  1: 'Bygningsbasis',
-  2: 'Primære bygningsdele',
-  3: 'Kompletterende bygningsdele',
-  4: 'Overfladebygningsdele',
-  5: 'VVS- og Ventilationsanlæg',
-  6: 'El- og mekaniske anlæg',
-  7: 'Inventar og teknisk udstyr',
-  8: 'Beplantning og belægning',
-  9: 'Projektudstyr',
-};
-
-const BIM7AA_SUB = {
-  '0.1': 'Generiske bygningsdele',
-  '1.1': 'Fundering og terrændæk',
-  '1.2': 'Kælder og sokkel',
-  '2.1': 'Ydervægge',
-  '2.2': 'Indervægge',
-  '2.3': 'Dækkonstruktioner',
-  '2.4': 'Tagkonstruktioner',
-  '2.5': 'Søjler og dragere',
-  '3.1': 'Vinduer og yderdøre',
-  '3.2': 'Facadebeklædning',
-  '3.3': 'Lofter og altaner',
-  '4.1': 'Gulvbelægninger',
-  '4.2': 'Vægbeklædninger',
-  '4.3': 'Loftbeklædninger',
-  '4.4': 'Facadebeklædninger',
-  '5.1': 'Varmeanlæg',
-  '5.2': 'Ventilationsanlæg',
-  '5.3': 'Vand- og afløbsanlæg',
-  '5.4': 'Køleanlæg',
-  '6.1': 'Elinstallationer',
-  '6.2': 'IT og svagstrømsanlæg',
-  '6.3': 'Brand og sikringsanlæg',
-  '7.1': 'Inventar og udstyr',
-  '7.2': 'Løst inventar',
-  '7.3': 'Teknisk udstyr',
-  '8.1': 'Beplantning',
-  '8.2': 'Hårde belægninger',
-  '8.3': 'Udendørs udstyr',
-  '9.1': 'Projektudstyr',
-};
+import { BIM7AA, BIM7AA_SUB } from '../utils/bim7aa';
+import { gwpColour, fireRatingColour } from '../utils/colours';
 
 const STATUS_LABELS = { 1: 'Draft', 2: 'Preliminary', 3: 'Final' };
 const STATUS_COLORS = {
@@ -61,21 +19,6 @@ function getSubcats(cat) {
     .map(([k, v]) => ({ code: k, label: v }));
 }
 
-function gwpColour(v) {
-  if (v < 0)   return { color: '#2e7d32', bg: '#e8f5e9' };
-  if (v < 50)  return { color: '#1565c0', bg: '#e3f2fd' };
-  if (v < 150) return { color: '#e65100', bg: '#fff3e0' };
-  return               { color: '#c62828', bg: '#ffebee' };
-}
-
-function fireRatingColour(rating) {
-  const r = (rating ?? '').toUpperCase();
-  if (r.startsWith('A1')) return { text: '#1b5e20', bg: '#e8f5e9' };
-  if (r.startsWith('A2')) return { text: '#2e7d32', bg: '#f1f8e9' };
-  if (r.startsWith('B'))  return { text: '#e65100', bg: '#fff3e0' };
-  if (r.startsWith('C'))  return { text: '#bf360c', bg: '#fbe9e7' };
-  return                          { text: '#555',   bg: '#f5f5f5' };
-}
 
 function formatDate(d) {
   if (!d) return '—';
@@ -95,6 +38,11 @@ function PropRow({ label, value }) {
     </div>
   );
 }
+
+PropRow.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
 
 export default function ElementDetail() {
   const { id } = useParams();
@@ -195,12 +143,13 @@ export default function ElementDetail() {
 
   // ── Product search ─────────────────────────────────────────────
   useEffect(() => {
-    if (!search.trim()) { setSearchResults([]); return; }
+    if (!search.trim()) { setSearchResults([]); setAddError(''); return; }
     const t = setTimeout(() => {
       setSearching(true);
+      setAddError('');
       api.get(`/products?search=${encodeURIComponent(search.trim())}`)
         .then(res => setSearchResults((res.data ?? []).slice(0, 8)))
-        .catch(() => {})
+        .catch(() => setAddError('Search failed. Please try again.'))
         .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(t);

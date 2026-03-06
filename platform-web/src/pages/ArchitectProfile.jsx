@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-
-function safeHref(url) {
-  if (!url) return '#';
-  return url.startsWith('http') ? url : `https://${url}`;
-}
+import { safeHref } from '../utils/safeHref';
 
 function joinYear(dateStr) {
   return new Date(dateStr).getFullYear();
@@ -25,8 +21,9 @@ export default function ArchitectProfile() {
     try {
       const res = await api.get('/profile');
       setProfile(res.data);
-    } catch {}
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error('Failed to load architect profile:', err);
+    } finally { setLoading(false); }
   }
 
   function startEdit() {

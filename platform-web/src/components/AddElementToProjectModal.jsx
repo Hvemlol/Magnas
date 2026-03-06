@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../services/api';
+import { BIM7AA } from '../utils/bim7aa';
 
 /**
  * Two modes:
@@ -22,9 +24,9 @@ export default function AddElementToProjectModal({
   const [loadingGroups, setLoadingGroups] = useState(false);
 
   // ── Project-first state ──────────────────────────────────────
+  const [allElements, setAllElements]     = useState([]);
+  const [loadingElements, setLoadingElements] = useState(false);
   const [search, setSearch]               = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [searching, setSearching]         = useState(false);
   const [selElement, setSelElement]       = useState(null);
 
   // ── Shared ───────────────────────────────────────────────────
@@ -36,7 +38,8 @@ export default function AddElementToProjectModal({
   // Load projects list (element-first mode)
   useEffect(() => {
     if (isElementFirst) {
-      api.get('/projects').then(res => setProjects(res.data)).catch(() => {});
+      api.get('/projects').then(res => setProjects(res.data))
+        .catch(() => setError('Failed to load your projects. Please close and try again.'));
     }
   }, [isElementFirst]);
 
@@ -46,25 +49,24 @@ export default function AddElementToProjectModal({
     setLoadingGroups(true);
     api.get(`/projects/${selProjectId}`)
       .then(res => setSelGroups(res.data.groups ?? []))
-      .catch(() => setSelGroups([]))
+      .catch(() => { setSelGroups([]); setError('Failed to load project subgroups. Please reselect the project.'); })
       .finally(() => setLoadingGroups(false));
   }, [selProjectId, isElementFirst]);
 
-  // Element search with debounce (project-first mode)
+  // Load all elements once on open (project-first mode) — filter client-side
   useEffect(() => {
-    if (isElementFirst || !search.trim()) { setSearchResults([]); return; }
-    const t = setTimeout(() => {
-      setSearching(true);
-      api.get('/elements')
-        .then(res => {
-          const q = search.trim().toLowerCase();
-          setSearchResults((res.data ?? []).filter(e => e.name.toLowerCase().includes(q)).slice(0, 8));
-        })
-        .catch(() => {})
-        .finally(() => setSearching(false));
-    }, 200);
-    return () => clearTimeout(t);
-  }, [search, isElementFirst]);
+    if (isElementFirst) return;
+    setLoadingElements(true);
+    api.get('/elements')
+      .then(res => setAllElements(res.data ?? []))
+      .catch(() => setError('Failed to load elements. Please close and try again.'))
+      .finally(() => setLoadingElements(false));
+  }, [isElementFirst]);
+
+  // Derived: filter cached elements by search query
+  const searchResults = !isElementFirst && search.trim()
+    ? allElements.filter(e => e.name.toLowerCase().includes(search.trim().toLowerCase())).slice(0, 8)
+    : [];
 
   async function handleSubmit() {
     const eid    = isElementFirst ? elementId      : selElement?.id;
@@ -83,7 +85,7 @@ export default function AddElementToProjectModal({
       if (isElementFirst) {
         setSelProjectId(''); setSelGroupId(''); setSelGroups([]);
       } else {
-        setSelElement(null); setSearch(''); setSearchResults([]); setSelGroupId('');
+        setSelElement(null); setSearch(''); setSelGroupId('');
       }
       if (onAdded) onAdded();
     } catch (err) {
@@ -92,13 +94,6 @@ export default function AddElementToProjectModal({
       setSubmitting(false);
     }
   }
-
-  const BIM7AA = {
-    0: 'Generiske objekter', 1: 'Bygningsbasis', 2: 'Primære bygningsdele',
-    3: 'Kompletterende bygningsdele', 4: 'Overfladebygningsdele',
-    5: 'VVS- og Ventilationsanlæg', 6: 'El- og mekaniske anlæg',
-    7: 'Inventar og teknisk udstyr', 8: 'Beplantning og belægning', 9: 'Projektudstyr',
-  };
 
   const groups    = isElementFirst ? selGroups : (projectGroups ?? []);
   const canSubmit = isElementFirst ? (!!selProjectId && !submitting) : (!!selElement && !submitting);
@@ -176,15 +171,15 @@ export default function AddElementToProjectModal({
                       placeholder="Type to search your elements…"
                       autoFocus
                     />
-                    {searching && <span style={s.muted}>Searching…</span>}
-                    {!searching && search.trim() && searchResults.length === 0 && (
+                    {loadingElements && <span style={s.muted}>Loading elements…</span>}
+                    {!loadingElements && search.trim() && searchResults.length === 0 && (
                       <span style={s.muted}>No elements found.</span>
                     )}
                     {searchResults.length > 0 && (
                       <div style={s.results}>
                         {searchResults.map(el => (
                           <button key={el.id} style={s.resultItem}
-                            onClick={() => { setSelElement(el); setSearchResults([]); setSearch(''); }}
+                            onClick={() => { setSelElement(el); setSearch(''); }}
                           >
                             <span style={s.resultName}>{el.name}</span>
                             <span style={s.resultMeta}>{BIM7AA[el.bim7aaCategory]} · {el.productCount} products</span>
@@ -222,6 +217,18 @@ export default function AddElementToProjectModal({
     </>
   );
 }
+
+AddElementToProjectModal.propTypes = {
+  elementId: PropTypes.number,
+  elementName: PropTypes.string,
+  projectId: PropTypes.number,
+  projectGroups: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  })),
+  onClose: PropTypes.func.isRequired,
+  onAdded: PropTypes.func,
+};
 
 const s = {
   backdrop:    { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200 },

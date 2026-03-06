@@ -9,6 +9,7 @@ export default function Projects() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm]         = useState({ name: '', description: '', location: '' });
   const [error, setError]       = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => { load(); }, []);
 
@@ -20,7 +21,7 @@ export default function Projects() {
       ]);
       setProjects(projRes.data);
       setInvites(invRes.data);
-    } catch {}
+    } catch { setError('Failed to load your projects. Please refresh the page.'); }
     finally { setLoading(false); }
   }
 
@@ -28,14 +29,16 @@ export default function Projects() {
 
   async function handleCreate(e) {
     e.preventDefault();
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) { setError('Project name is required.'); return; }
     setError('');
+    setSubmitting(true);
     try {
       const res = await api.post('/projects', form);
       setProjects(ps => [res.data, ...ps]);
       setForm({ name: '', description: '', location: '' });
       setShowForm(false);
     } catch (err) { setError(err.response?.data?.error ?? 'Failed to create project.'); }
+    finally { setSubmitting(false); }
   }
 
   async function handleDelete(id, e) {
@@ -114,12 +117,13 @@ export default function Projects() {
               placeholder="Brief description of the project" />
           </div>
           <div style={s.formBtns}>
-            <button type="submit" style={s.createBtn}>Create project</button>
+            <button type="submit" style={s.createBtn} disabled={submitting}>{submitting ? 'Creating…' : 'Create project'}</button>
             <button type="button" style={s.cancelBtn} onClick={() => setShowForm(false)}>Cancel</button>
           </div>
         </form>
       )}
 
+      {!loading && error && !showForm && <div style={s.error}>{error}</div>}
       {loading && <p style={s.msg}>Loading...</p>}
       {!loading && projects.length === 0 && !showForm && (
         <div style={s.empty}>

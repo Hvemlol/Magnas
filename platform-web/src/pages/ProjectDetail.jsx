@@ -1,15 +1,11 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 import AddToProjectModal from '../components/AddToProjectModal';
 import AddElementToProjectModal from '../components/AddElementToProjectModal';
-
-const BIM7AA = {
-  0: 'Generiske objekter', 1: 'Bygningsbasis', 2: 'Primære bygningsdele',
-  3: 'Kompletterende bygningsdele', 4: 'Overfladebygningsdele',
-  5: 'VVS- og Ventilationsanlæg', 6: 'El- og mekaniske anlæg',
-  7: 'Inventar og teknisk udstyr', 8: 'Beplantning og belægning', 9: 'Projektudstyr',
-};
+import { BIM7AA } from '../utils/bim7aa';
+import { gwpColour, fireRatingColour } from '../utils/colours';
 
 export default function ProjectDetail() {
   const { id } = useParams();
@@ -30,6 +26,12 @@ export default function ProjectDetail() {
   // Invite collaborator
   const [inviteInput, setInviteInput] = useState('');
   const [inviteError, setInviteError] = useState('');
+
+  // Action errors (replaces alert())
+  const [actionError, setActionError] = useState('');
+
+  // In-flight guard (prevents double-submit)
+  const [saving, setSaving] = useState(false);
 
   // Rename group
   const [renamingGroupId, setRenamingGroupId] = useState(null);
@@ -63,33 +65,42 @@ export default function ProjectDetail() {
     setEditingHeader(true);
   }
   async function saveHeader() {
-    if (!headerForm.name.trim()) return;
+    if (!headerForm.name.trim()) { setActionError('Project name is required.'); return; }
+    if (saving) return;
+    setSaving(true);
     try {
       const res = await api.put(`/projects/${id}`, headerForm);
       setProject(p => ({ ...p, name: res.data.name, description: res.data.description, location: res.data.location }));
       setEditingHeader(false);
-    } catch { alert('Failed to save.'); }
+    } catch { setActionError('Failed to save.'); }
+    finally { setSaving(false); }
   }
 
   // ── Groups ──────────────────────────────────────────────────
   async function addGroup(e) {
     e.preventDefault();
     if (!newGroupName.trim()) return;
+    if (saving) return;
+    setSaving(true);
     try {
       const res = await api.post(`/projects/${id}/groups`, { name: newGroupName.trim() });
       setProject(p => ({ ...p, groups: [...p.groups, res.data] }));
       setNewGroupName('');
       setAddingGroup(false);
-    } catch { alert('Failed to add group.'); }
+    } catch { setActionError('Failed to add group.'); }
+    finally { setSaving(false); }
   }
 
   async function renameGroup(groupId) {
-    if (!renameValue.trim()) return;
+    if (!renameValue.trim()) { setActionError('Group name is required.'); return; }
+    if (saving) return;
+    setSaving(true);
     try {
       const res = await api.put(`/projects/${id}/groups/${groupId}`, { name: renameValue.trim() });
       setProject(p => ({ ...p, groups: p.groups.map(g => g.id === groupId ? { ...g, name: res.data.name } : g) }));
       setRenamingGroupId(null);
-    } catch { alert('Failed to rename group.'); }
+    } catch { setActionError('Failed to rename group.'); }
+    finally { setSaving(false); }
   }
 
   async function deleteGroup(groupId) {
@@ -101,7 +112,7 @@ export default function ProjectDetail() {
         groups: p.groups.filter(g => g.id !== groupId),
         products: p.products.map(pp => pp.groupId === groupId ? { ...pp, groupId: null, groupName: null } : pp)
       }));
-    } catch { alert('Failed to delete group.'); }
+    } catch { setActionError('Failed to delete group.'); }
   }
 
   // ── Products ────────────────────────────────────────────────
@@ -121,7 +132,7 @@ export default function ProjectDetail() {
           ? { ...item, groupId: newGroupId ?? null, groupName: group?.name ?? null }
           : item)
       }));
-    } catch { alert('Failed to move product.'); }
+    } catch { setActionError('Failed to move product.'); }
   }
 
   async function updateNotes(ppId, notes) {
@@ -130,7 +141,7 @@ export default function ProjectDetail() {
     try {
       await api.patch(`/projects/${id}/products/${ppId}`, { groupId: pp.groupId ?? null, notes });
       setProject(p => ({ ...p, products: p.products.map(item => item.id === ppId ? { ...item, notes } : item) }));
-    } catch { alert('Failed to update notes.'); }
+    } catch { setActionError('Failed to update notes.'); }
   }
 
   async function removeProduct(ppId) {
@@ -138,7 +149,7 @@ export default function ProjectDetail() {
     try {
       await api.delete(`/projects/${id}/products/${ppId}`);
       setProject(p => ({ ...p, products: p.products.filter(item => item.id !== ppId) }));
-    } catch { alert('Failed to remove product.'); }
+    } catch { setActionError('Failed to remove product.'); }
   }
 
   async function removeElement(peId) {
@@ -146,7 +157,7 @@ export default function ProjectDetail() {
     try {
       await api.delete(`/projects/${id}/elements/${peId}`);
       setProject(p => ({ ...p, projectElements: p.projectElements.filter(pe => pe.id !== peId) }));
-    } catch { alert('Failed to remove element.'); }
+    } catch { setActionError('Failed to remove element.'); }
   }
 
   // ── Members ──────────────────────────────────────────────────
@@ -169,7 +180,7 @@ export default function ProjectDetail() {
     try {
       await api.delete(`/projects/${id}/members/${memberId}`);
       setProject(p => ({ ...p, members: p.members.filter(m => m.id !== memberId) }));
-    } catch { alert('Failed to remove member.'); }
+    } catch { setActionError('Failed to remove member.'); }
   }
 
   // ── Derived ─────────────────────────────────────────────────
@@ -194,22 +205,6 @@ export default function ProjectDetail() {
     return { total, gwpSum: withGwp.length > 0 ? gwpSum : null, withGwp: withGwp.length, fullEpd };
   }, [project]);
 
-  function gwpColour(v) {
-    if (v < 0)   return { color: '#2e7d32', bg: '#e8f5e9' };
-    if (v < 50)  return { color: '#1565c0', bg: '#e3f2fd' };
-    if (v < 150) return { color: '#e65100', bg: '#fff3e0' };
-    return               { color: '#c62828', bg: '#ffebee' };
-  }
-
-  function fireRatingColour(rating) {
-    const r = (rating ?? '').toUpperCase();
-    if (r.startsWith('A1')) return { text: '#1b5e20', bg: '#e8f5e9' };
-    if (r.startsWith('A2')) return { text: '#2e7d32', bg: '#f1f8e9' };
-    if (r.startsWith('B'))  return { text: '#e65100', bg: '#fff3e0' };
-    if (r.startsWith('C'))  return { text: '#bf360c', bg: '#fbe9e7' };
-    return                          { text: '#555',   bg: '#f5f5f5' };
-  }
-
   if (loading)  return <div style={s.state}>Loading...</div>;
   if (notFound) return (
     <div style={s.state}>
@@ -231,7 +226,7 @@ export default function ProjectDetail() {
             <input style={s.input} value={headerForm.description} onChange={e => setHeaderForm(f => ({ ...f, description: e.target.value }))} placeholder="Description" />
           </div>
           <div style={s.headerEditBtns}>
-            <button style={s.saveBtn} onClick={saveHeader}>Save</button>
+            <button style={s.saveBtn} onClick={saveHeader} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
             <button style={s.cancelBtn} onClick={() => setEditingHeader(false)}>Cancel</button>
           </div>
         </div>
@@ -256,6 +251,13 @@ export default function ProjectDetail() {
         </div>
       )}
 
+      {actionError && (
+        <div style={s.actionError}>
+          {actionError}
+          <button style={s.actionErrorDismiss} onClick={() => setActionError('')}>✕</button>
+        </div>
+      )}
+
       {/* ── Add group bar ── */}
       <div style={s.groupBar}>
         {addingGroup ? (
@@ -267,7 +269,7 @@ export default function ProjectDetail() {
               placeholder="Group name (e.g. Facade, Structure)"
               autoFocus
             />
-            <button type="submit" style={s.saveBtn}>Add</button>
+            <button type="submit" style={s.saveBtn} disabled={saving}>{saving ? 'Adding…' : 'Add'}</button>
             <button type="button" style={s.cancelBtn} onClick={() => { setAddingGroup(false); setNewGroupName(''); }}>Cancel</button>
           </form>
         ) : (
@@ -319,6 +321,7 @@ export default function ProjectDetail() {
               onRenameSubmit={() => renameGroup(g.id)}
               onRenameCancel={() => setRenamingGroupId(null)}
               onDeleteGroup={() => deleteGroup(g.id)}
+              saving={saving}
             />
           ))}
 
@@ -378,7 +381,7 @@ export default function ProjectDetail() {
                                     await api.patch(`/projects/${id}/elements/${pe.id}`, { groupId: newGroupId, notes: pe.notes });
                                     const group = newGroupId ? project.groups.find(g => g.id === newGroupId) : null;
                                     setProject(p => ({ ...p, projectElements: p.projectElements.map(item => item.id === pe.id ? { ...item, groupId: newGroupId, groupName: group?.name ?? null } : item) }));
-                                  } catch { alert('Failed to move element.'); }
+                                  } catch { setActionError('Failed to move element.'); }
                                 }}
                               >
                                 <option value="">Ungrouped</option>
@@ -500,6 +503,7 @@ function ProductSection({
   gwpColour, fireRatingColour,
   isUngrouped = false,
   isRenaming, renameValue, onStartRename, onRenameChange, onRenameSubmit, onRenameCancel, onDeleteGroup,
+  saving = false,
 }) {
   const [editingNotes, setEditingNotes] = useState(null);
   const [notesValue, setNotesValue]     = useState('');
@@ -514,7 +518,7 @@ function ProductSection({
           {isRenaming ? (
             <form style={ps.renameForm} onSubmit={e => { e.preventDefault(); onRenameSubmit(); }}>
               <input style={ps.renameInput} value={renameValue} onChange={e => onRenameChange(e.target.value)} autoFocus />
-              <button type="submit" style={ps.renameBtn}>Save</button>
+              <button type="submit" style={ps.renameBtn} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
               <button type="button" style={ps.renameCancel} onClick={onRenameCancel}>Cancel</button>
             </form>
           ) : (
@@ -663,6 +667,9 @@ const s = {
   saveBtn:       { padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#000080', color: '#ffffff', cursor: 'pointer', fontWeight: 700, fontFamily: 'inherit' },
   cancelBtn:     { padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#d4d0c8', color: '#000000', cursor: 'pointer', fontFamily: 'inherit' },
 
+  actionError:        { display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', color: '#c00000', fontSize: '0.85rem', background: '#ffe0e0', border: '1px solid #c62828', padding: '6px 10px', marginBottom: '14px' },
+  actionErrorDismiss: { background: 'none', border: 'none', cursor: 'pointer', color: '#c00000', fontSize: '0.85rem', padding: '0 2px', fontFamily: 'inherit', lineHeight: 1 },
+
   groupBar:      { marginBottom: '18px' },
   addGroupBtn:   { padding: '5px 14px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#d4d0c8', cursor: 'pointer', fontSize: '0.85rem', color: '#000000', fontFamily: 'inherit' },
   addGroupForm:  { display: 'flex', gap: '8px', alignItems: 'center' },
@@ -700,6 +707,28 @@ const s = {
   summaryItem:   { display: 'flex', flexDirection: 'column', gap: '4px' },
   summaryValue:  { fontSize: '1.3rem', fontWeight: 700, color: '#000000', padding: '2px 8px', display: 'inline-block' },
   summaryLabel:  { fontSize: '0.78rem', color: '#808080' },
+};
+
+ProductSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  items: PropTypes.array.isRequired,
+  groups: PropTypes.array.isRequired,
+  collapsed: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  onMove: PropTypes.func.isRequired,
+  onUpdateNotes: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+  gwpColour: PropTypes.func.isRequired,
+  fireRatingColour: PropTypes.func.isRequired,
+  isUngrouped: PropTypes.bool,
+  isRenaming: PropTypes.bool,
+  renameValue: PropTypes.string,
+  onStartRename: PropTypes.func,
+  onRenameChange: PropTypes.func,
+  onRenameSubmit: PropTypes.func,
+  onRenameCancel: PropTypes.func,
+  onDeleteGroup: PropTypes.func,
+  saving: PropTypes.bool,
 };
 
 const ps = {

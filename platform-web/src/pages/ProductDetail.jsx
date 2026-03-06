@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AddToProjectModal from '../components/AddToProjectModal';
+import { safeHref } from '../utils/safeHref';
+import { gwpColour, fireRatingColour } from '../utils/colours';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -14,6 +17,7 @@ export default function ProductDetail() {
   const [notFound, setNotFound] = useState(false);
   const [busy, setBusy] = useState(false);
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   useEffect(() => {
     api.get(`/products/${id}`)
@@ -29,7 +33,7 @@ export default function ProductDetail() {
           const match = res.data.find(s => s.product.id === parseInt(id));
           if (match) setSavedId(match.savedId);
         })
-        .catch(() => {});
+        .catch(() => console.error('Failed to load saved product status.'));
     }
   }, [user, id]);
 
@@ -38,7 +42,7 @@ export default function ProductDetail() {
     try {
       const res = await api.post('/saved', { productId: product.id });
       setSavedId(res.data.id);
-    } catch (e) { alert(e.response?.data?.error ?? 'Failed to save.'); }
+    } catch (e) { setActionError(e.response?.data?.error ?? 'Failed to save.'); }
     finally { setBusy(false); }
   }
 
@@ -47,7 +51,7 @@ export default function ProductDetail() {
     try {
       await api.delete(`/saved/${savedId}`);
       setSavedId(null);
-    } catch { alert('Failed to unsave.'); }
+    } catch { setActionError('Failed to unsave.'); }
     finally { setBusy(false); }
   }
 
@@ -79,17 +83,6 @@ export default function ProductDetail() {
     p.bimUrl                && { href: p.bimUrl,                icon: '🧱', label: 'BIM Object',                 desc: 'Revit / IFC / ArchiCAD compatible' },
   ].filter(Boolean);
 
-  function safeHref(url) {
-    if (!url) return '#';
-    return url.startsWith('http') ? url : `https://${url}`;
-  }
-
-  function gwpColour(v) {
-    if (v < 0)   return { color: '#2e7d32', bg: '#e8f5e9' };
-    if (v < 50)  return { color: '#1565c0', bg: '#e3f2fd' };
-    if (v < 150) return { color: '#e65100', bg: '#fff3e0' };
-    return               { color: '#c62828', bg: '#ffebee' };
-  }
 
   return (
     <div style={s.page}>
@@ -126,6 +119,7 @@ export default function ProductDetail() {
               ? <button style={s.savedBtn} disabled={busy} onClick={handleUnsave}>✓ Saved</button>
               : <button style={s.saveBtn}  disabled={busy} onClick={handleSave}>Save product</button>
             }
+            {actionError && <div style={s.actionError}>{actionError}</div>}
           </div>
         )}
       </div>
@@ -390,15 +384,42 @@ function DocLink({ href, icon, label, desc }) {
   );
 }
 
-function fireRatingColour(rating) {
-  const r = (rating ?? '').toUpperCase();
-  if (r.startsWith('A1'))  return { text: '#1b5e20', bg: '#e8f5e9' };
-  if (r.startsWith('A2'))  return { text: '#2e7d32', bg: '#f1f8e9' };
-  if (r.startsWith('B'))   return { text: '#e65100', bg: '#fff3e0' };
-  if (r.startsWith('C'))   return { text: '#bf360c', bg: '#fbe9e7' };
-  if (r.startsWith('DFL')) return { text: '#6a1a1a', bg: '#ffebee' };
-  return                          { text: '#555',    bg: '#f5f5f5' };
-}
+SpecRow.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  badge: PropTypes.shape({
+    text: PropTypes.string.isRequired,
+    color: PropTypes.shape({
+      text: PropTypes.string.isRequired,
+      bg: PropTypes.string.isRequired,
+    }).isRequired,
+  }),
+};
+
+GwpRow.propTypes = {
+  stage: PropTypes.string.isRequired,
+  desc: PropTypes.string.isRequired,
+  value: PropTypes.number,
+  gwpColour: PropTypes.func.isRequired,
+};
+
+DimBox.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.number.isRequired,
+  unit: PropTypes.string.isRequired,
+};
+
+AbsorptionBar.propTypes = {
+  value: PropTypes.number.isRequired,
+};
+
+DocLink.propTypes = {
+  href: PropTypes.string.isRequired,
+  icon: PropTypes.string,
+  label: PropTypes.string.isRequired,
+  desc: PropTypes.string.isRequired,
+};
+
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
@@ -425,6 +446,7 @@ const s = {
   description:   { margin: 0, fontSize: '0.92rem', color: '#404040', lineHeight: 1.7 },
   saveBtn:       { padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#000080', color: '#ffffff', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', fontFamily: 'inherit' },
   savedBtn:      { padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#d4d0c8', color: '#2e7d32', cursor: 'pointer', fontWeight: 700, fontSize: '0.88rem', whiteSpace: 'nowrap', fontFamily: 'inherit' },
+  actionError:   { color: '#c00000', fontSize: '0.8rem', background: '#ffe0e0', border: '1px solid #c62828', padding: '4px 8px', maxWidth: '180px', textAlign: 'right' },
 
   // Layout
   body:          { display: 'grid', gridTemplateColumns: '1fr 300px', gap: '18px', alignItems: 'start' },
