@@ -91,6 +91,13 @@ describe('AuthContext', () => {
     expect(localStorage.getItem('user')).toBeNull();
   });
 
+  it('treats corrupted localStorage as logged-out and clears it', () => {
+    localStorage.setItem('user', 'this is not valid json {{{');
+    renderWithAuth();
+    expect(screen.getByTestId('user').textContent).toBe('null');
+    expect(localStorage.getItem('user')).toBeNull();
+  });
+
   it('maps authResponse fields correctly on login', async () => {
     renderWithAuth();
     await act(async () => {
