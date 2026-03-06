@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AddToProjectModal from '../components/AddToProjectModal';
+import { safeHref } from '../utils/safeHref';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -80,10 +81,6 @@ export default function ProductDetail() {
     p.bimUrl                && { href: p.bimUrl,                icon: '🧱', label: 'BIM Object',                 desc: 'Revit / IFC / ArchiCAD compatible' },
   ].filter(Boolean);
 
-  function safeHref(url) {
-    if (!url) return '#';
-    return url.startsWith('http') ? url : `https://${url}`;
-  }
 
   function gwpColour(v) {
     if (v < 0)   return { color: '#2e7d32', bg: '#e8f5e9' };

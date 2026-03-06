@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import api from '../services/api';
 import ProductCard from '../components/ProductCard';
 import { useAuth } from '../context/AuthContext';
+import { safeHref } from '../utils/safeHref';
 
 export default function ManufacturerProfile() {
   const { id } = useParams();
@@ -46,11 +47,6 @@ export default function ManufacturerProfile() {
   const initial    = (profile.companyName ?? profile.username).charAt(0).toUpperCase();
   const displayName = profile.companyName ?? profile.username;
 
-  // Ensure website/linkedin have a protocol so the <a> tag works
-  function safeHref(url) {
-    if (!url) return '#';
-    return url.startsWith('http') ? url : `https://${url}`;
-  }
 
   return (
     <div style={s.page}>

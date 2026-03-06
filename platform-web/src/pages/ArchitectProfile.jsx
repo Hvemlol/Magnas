@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import api from '../services/api';
-
-function safeHref(url) {
-  if (!url) return '#';
-  return url.startsWith('http') ? url : `https://${url}`;
-}
+import { safeHref } from '../utils/safeHref';
 
 function joinYear(dateStr) {
   return new Date(dateStr).getFullYear();
