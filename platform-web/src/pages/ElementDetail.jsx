@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 import AddElementToProjectModal from '../components/AddElementToProjectModal';
 
@@ -95,6 +96,11 @@ function PropRow({ label, value }) {
     </div>
   );
 }
+
+PropRow.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};
 
 export default function ElementDetail() {
   const { id } = useParams();

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 
 /**
@@ -232,6 +233,18 @@ export default function AddToProjectModal({
     </>
   );
 }
+
+AddToProjectModal.propTypes = {
+  productId: PropTypes.number,
+  productName: PropTypes.string,
+  projectId: PropTypes.number,
+  projectGroups: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+  })),
+  onClose: PropTypes.func.isRequired,
+  onAdded: PropTypes.func,
+};
 
 const s = {
   backdrop:      { position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 200 },

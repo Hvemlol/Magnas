@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 
 const EMPTY_FORM = {
@@ -363,6 +364,35 @@ function Section({ title, badge, badgeStyle, products, onEdit, onToggle, onDelet
     </div>
   );
 }
+
+FormSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  children: PropTypes.node.isRequired,
+};
+
+Field.propTypes = {
+  label: PropTypes.string.isRequired,
+  hint: PropTypes.string,
+  children: PropTypes.node.isRequired,
+};
+
+Section.propTypes = {
+  title: PropTypes.string.isRequired,
+  badge: PropTypes.string,
+  badgeStyle: PropTypes.object,
+  products: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string.isRequired,
+    category: PropTypes.string,
+    material: PropTypes.string,
+    fireRating: PropTypes.string,
+    isPublished: PropTypes.bool,
+  })).isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired,
+  emptyMsg: PropTypes.string,
+};
 
 const st = {
   page:       { padding: '24px', maxWidth: '900px', margin: '0 auto' },

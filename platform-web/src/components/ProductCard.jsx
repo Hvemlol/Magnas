@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -53,6 +54,22 @@ export default function ProductCard({ product, savedId, onSaved, onUnsaved }) {
     </div>
   );
 }
+
+ProductCard.propTypes = {
+  product: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    category: PropTypes.string,
+    name: PropTypes.string.isRequired,
+    manufacturerId: PropTypes.number,
+    manufacturerName: PropTypes.string,
+    material: PropTypes.string,
+    fireRating: PropTypes.string,
+    gwpA1A3: PropTypes.number,
+  }).isRequired,
+  savedId: PropTypes.number,
+  onSaved: PropTypes.func,
+  onUnsaved: PropTypes.func,
+};
 
 const styles = {
   card:         { border: '1px solid #9a9790', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', background: '#d4d0c8', padding: '14px', display: 'flex', flexDirection: 'column', gap: '5px' },

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AddToProjectModal from '../components/AddToProjectModal';
@@ -389,6 +390,42 @@ function DocLink({ href, icon, label, desc }) {
     </a>
   );
 }
+
+SpecRow.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+  badge: PropTypes.shape({
+    text: PropTypes.string.isRequired,
+    color: PropTypes.shape({
+      text: PropTypes.string.isRequired,
+      bg: PropTypes.string.isRequired,
+    }).isRequired,
+  }),
+};
+
+GwpRow.propTypes = {
+  stage: PropTypes.string.isRequired,
+  desc: PropTypes.string.isRequired,
+  value: PropTypes.number,
+  gwpColour: PropTypes.func.isRequired,
+};
+
+DimBox.propTypes = {
+  label: PropTypes.string.isRequired,
+  value: PropTypes.number.isRequired,
+  unit: PropTypes.string.isRequired,
+};
+
+AbsorptionBar.propTypes = {
+  value: PropTypes.number.isRequired,
+};
+
+DocLink.propTypes = {
+  href: PropTypes.string.isRequired,
+  icon: PropTypes.string,
+  label: PropTypes.string.isRequired,
+  desc: PropTypes.string.isRequired,
+};
 
 function fireRatingColour(rating) {
   const r = (rating ?? '').toUpperCase();

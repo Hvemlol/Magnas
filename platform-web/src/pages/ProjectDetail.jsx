@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 import api from '../services/api';
 import AddToProjectModal from '../components/AddToProjectModal';
 import AddElementToProjectModal from '../components/AddElementToProjectModal';
@@ -700,6 +701,27 @@ const s = {
   summaryItem:   { display: 'flex', flexDirection: 'column', gap: '4px' },
   summaryValue:  { fontSize: '1.3rem', fontWeight: 700, color: '#000000', padding: '2px 8px', display: 'inline-block' },
   summaryLabel:  { fontSize: '0.78rem', color: '#808080' },
+};
+
+ProductSection.propTypes = {
+  title: PropTypes.string.isRequired,
+  items: PropTypes.array.isRequired,
+  groups: PropTypes.array.isRequired,
+  collapsed: PropTypes.bool.isRequired,
+  onToggle: PropTypes.func.isRequired,
+  onMove: PropTypes.func.isRequired,
+  onUpdateNotes: PropTypes.func.isRequired,
+  onRemove: PropTypes.func.isRequired,
+  gwpColour: PropTypes.func.isRequired,
+  fireRatingColour: PropTypes.func.isRequired,
+  isUngrouped: PropTypes.bool,
+  isRenaming: PropTypes.bool,
+  renameValue: PropTypes.string,
+  onStartRename: PropTypes.func,
+  onRenameChange: PropTypes.func,
+  onRenameSubmit: PropTypes.func,
+  onRenameCancel: PropTypes.func,
+  onDeleteGroup: PropTypes.func,
 };
 
 const ps = {
