@@ -159,7 +159,7 @@ using (var scope = app.Services.CreateScope())
         }
 
         // ── Demo accounts ─────────────────────────────────────
-        var architect = MakeUser("architect@demo.com", "demo_architect", Platform.Api.Models.UserRole.Architect,
+        var architect = MakeUser("demo@architect.com", "demo_architect", Platform.Api.Models.UserRole.Architect,
             null, null, null, null, null, 10);
 
         // ── Manufacturers ──────────────────────────────────────
