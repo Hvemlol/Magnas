@@ -143,12 +143,13 @@ export default function ElementDetail() {
 
   // ── Product search ─────────────────────────────────────────────
   useEffect(() => {
-    if (!search.trim()) { setSearchResults([]); return; }
+    if (!search.trim()) { setSearchResults([]); setAddError(''); return; }
     const t = setTimeout(() => {
       setSearching(true);
+      setAddError('');
       api.get(`/products?search=${encodeURIComponent(search.trim())}`)
         .then(res => setSearchResults((res.data ?? []).slice(0, 8)))
-        .catch(() => {})
+        .catch(() => setAddError('Search failed. Please try again.'))
         .finally(() => setSearching(false));
     }, 300);
     return () => clearTimeout(t);

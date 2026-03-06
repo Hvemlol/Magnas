@@ -30,6 +30,9 @@ export default function ProjectDetail() {
   // Action errors (replaces alert())
   const [actionError, setActionError] = useState('');
 
+  // In-flight guard (prevents double-submit)
+  const [saving, setSaving] = useState(false);
+
   // Rename group
   const [renamingGroupId, setRenamingGroupId] = useState(null);
   const [renameValue, setRenameValue]         = useState('');
@@ -63,32 +66,41 @@ export default function ProjectDetail() {
   }
   async function saveHeader() {
     if (!headerForm.name.trim()) { setActionError('Project name is required.'); return; }
+    if (saving) return;
+    setSaving(true);
     try {
       const res = await api.put(`/projects/${id}`, headerForm);
       setProject(p => ({ ...p, name: res.data.name, description: res.data.description, location: res.data.location }));
       setEditingHeader(false);
     } catch { setActionError('Failed to save.'); }
+    finally { setSaving(false); }
   }
 
   // ── Groups ──────────────────────────────────────────────────
   async function addGroup(e) {
     e.preventDefault();
     if (!newGroupName.trim()) return;
+    if (saving) return;
+    setSaving(true);
     try {
       const res = await api.post(`/projects/${id}/groups`, { name: newGroupName.trim() });
       setProject(p => ({ ...p, groups: [...p.groups, res.data] }));
       setNewGroupName('');
       setAddingGroup(false);
     } catch { setActionError('Failed to add group.'); }
+    finally { setSaving(false); }
   }
 
   async function renameGroup(groupId) {
     if (!renameValue.trim()) { setActionError('Group name is required.'); return; }
+    if (saving) return;
+    setSaving(true);
     try {
       const res = await api.put(`/projects/${id}/groups/${groupId}`, { name: renameValue.trim() });
       setProject(p => ({ ...p, groups: p.groups.map(g => g.id === groupId ? { ...g, name: res.data.name } : g) }));
       setRenamingGroupId(null);
     } catch { setActionError('Failed to rename group.'); }
+    finally { setSaving(false); }
   }
 
   async function deleteGroup(groupId) {
@@ -214,7 +226,7 @@ export default function ProjectDetail() {
             <input style={s.input} value={headerForm.description} onChange={e => setHeaderForm(f => ({ ...f, description: e.target.value }))} placeholder="Description" />
           </div>
           <div style={s.headerEditBtns}>
-            <button style={s.saveBtn} onClick={saveHeader}>Save</button>
+            <button style={s.saveBtn} onClick={saveHeader} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
             <button style={s.cancelBtn} onClick={() => setEditingHeader(false)}>Cancel</button>
           </div>
         </div>
@@ -257,7 +269,7 @@ export default function ProjectDetail() {
               placeholder="Group name (e.g. Facade, Structure)"
               autoFocus
             />
-            <button type="submit" style={s.saveBtn}>Add</button>
+            <button type="submit" style={s.saveBtn} disabled={saving}>{saving ? 'Adding…' : 'Add'}</button>
             <button type="button" style={s.cancelBtn} onClick={() => { setAddingGroup(false); setNewGroupName(''); }}>Cancel</button>
           </form>
         ) : (
@@ -309,6 +321,7 @@ export default function ProjectDetail() {
               onRenameSubmit={() => renameGroup(g.id)}
               onRenameCancel={() => setRenamingGroupId(null)}
               onDeleteGroup={() => deleteGroup(g.id)}
+              saving={saving}
             />
           ))}
 
@@ -490,6 +503,7 @@ function ProductSection({
   gwpColour, fireRatingColour,
   isUngrouped = false,
   isRenaming, renameValue, onStartRename, onRenameChange, onRenameSubmit, onRenameCancel, onDeleteGroup,
+  saving = false,
 }) {
   const [editingNotes, setEditingNotes] = useState(null);
   const [notesValue, setNotesValue]     = useState('');
@@ -504,7 +518,7 @@ function ProductSection({
           {isRenaming ? (
             <form style={ps.renameForm} onSubmit={e => { e.preventDefault(); onRenameSubmit(); }}>
               <input style={ps.renameInput} value={renameValue} onChange={e => onRenameChange(e.target.value)} autoFocus />
-              <button type="submit" style={ps.renameBtn}>Save</button>
+              <button type="submit" style={ps.renameBtn} disabled={saving}>{saving ? 'Saving…' : 'Save'}</button>
               <button type="button" style={ps.renameCancel} onClick={onRenameCancel}>Cancel</button>
             </form>
           ) : (
@@ -714,6 +728,7 @@ ProductSection.propTypes = {
   onRenameSubmit: PropTypes.func,
   onRenameCancel: PropTypes.func,
   onDeleteGroup: PropTypes.func,
+  saving: PropTypes.bool,
 };
 
 const ps = {
