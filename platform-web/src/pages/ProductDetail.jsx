@@ -5,6 +5,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AddToProjectModal from '../components/AddToProjectModal';
 import { safeHref } from '../utils/safeHref';
+import { gwpColour, fireRatingColour } from '../utils/colours';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -82,13 +83,6 @@ export default function ProductDetail() {
     p.bimUrl                && { href: p.bimUrl,                icon: '🧱', label: 'BIM Object',                 desc: 'Revit / IFC / ArchiCAD compatible' },
   ].filter(Boolean);
 
-
-  function gwpColour(v) {
-    if (v < 0)   return { color: '#2e7d32', bg: '#e8f5e9' };
-    if (v < 50)  return { color: '#1565c0', bg: '#e3f2fd' };
-    if (v < 150) return { color: '#e65100', bg: '#fff3e0' };
-    return               { color: '#c62828', bg: '#ffebee' };
-  }
 
   return (
     <div style={s.page}>
@@ -426,15 +420,6 @@ DocLink.propTypes = {
   desc: PropTypes.string.isRequired,
 };
 
-function fireRatingColour(rating) {
-  const r = (rating ?? '').toUpperCase();
-  if (r.startsWith('A1'))  return { text: '#1b5e20', bg: '#e8f5e9' };
-  if (r.startsWith('A2'))  return { text: '#2e7d32', bg: '#f1f8e9' };
-  if (r.startsWith('B'))   return { text: '#e65100', bg: '#fff3e0' };
-  if (r.startsWith('C'))   return { text: '#bf360c', bg: '#fbe9e7' };
-  if (r.startsWith('DFL')) return { text: '#6a1a1a', bg: '#ffebee' };
-  return                          { text: '#555',    bg: '#f5f5f5' };
-}
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 

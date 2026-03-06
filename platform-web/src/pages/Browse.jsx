@@ -4,15 +4,7 @@ import Fuse from 'fuse.js';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import AddToProjectModal from '../components/AddToProjectModal';
-
-function fireRatingColour(rating) {
-  const r = (rating ?? '').toUpperCase();
-  if (r.startsWith('A1'))  return { text: '#1b5e20', bg: '#e8f5e9' };
-  if (r.startsWith('A2'))  return { text: '#2e7d32', bg: '#f1f8e9' };
-  if (r.startsWith('B'))   return { text: '#e65100', bg: '#fff3e0' };
-  if (r.startsWith('C'))   return { text: '#bf360c', bg: '#fbe9e7' };
-  return                          { text: '#555',    bg: '#f5f5f5' };
-}
+import { fireRatingColour } from '../utils/colours';
 
 const COLS = [
   { key: 'name',             label: 'Product name' },

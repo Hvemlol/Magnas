@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import api from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const EMPTY_FORM = {
   name: '', description: '', category: '', material: '', declaredUnit: '',
@@ -25,6 +26,7 @@ const EMPTY_FORM = {
 const EMPTY_PROFILE = { companyName: '', bio: '', location: '', website: '', linkedIn: '' };
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [tab, setTab] = useState('products');
 
   // ── products ──────────────────────────────────────────────
@@ -124,9 +126,8 @@ export default function Dashboard() {
 
   async function loadProfile() {
     try {
-      const me = JSON.parse(localStorage.getItem('user') ?? '{}');
-      if (!me.id) return;
-      const d = (await api.get(`/manufacturers/${me.id}`)).data;
+      if (!user?.id) return;
+      const d = (await api.get(`/manufacturers/${user.id}`)).data;
       setProfile({ companyName: d.companyName ?? '', bio: d.bio ?? '', location: d.location ?? '', website: d.website ?? '', linkedIn: d.linkedIn ?? '' });
     } catch {}
   }

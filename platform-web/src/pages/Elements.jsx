@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { BIM7AA, BIM7AA_SUB } from '../utils/bim7aa';
+import { gwpColour } from '../utils/colours';
 
 const STATUS_NAMES = { 1: 'Aktiv', 2: 'Under review', 3: 'Godkendt' };
 const STATUS_MAP   = {
@@ -14,13 +15,6 @@ function getSubcats(cat) {
   return Object.entries(BIM7AA_SUB)
     .filter(([k]) => k.startsWith(`${cat}.`))
     .map(([k, v]) => ({ code: k, label: v }));
-}
-
-function gwpColour(v) {
-  if (v < 0)   return { color: '#2e7d32', bg: '#e8f5e9' };
-  if (v < 50)  return { color: '#1565c0', bg: '#e3f2fd' };
-  if (v < 150) return { color: '#e65100', bg: '#fff3e0' };
-  return               { color: '#c62828', bg: '#ffebee' };
 }
 
 function relDate(dateStr) {
