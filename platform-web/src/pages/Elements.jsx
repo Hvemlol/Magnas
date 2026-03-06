@@ -1,51 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
-
-const BIM7AA = {
-  0: 'Generiske objekter',
-  1: 'Bygningsbasis',
-  2: 'Primære bygningsdele',
-  3: 'Kompletterende bygningsdele',
-  4: 'Overfladebygningsdele',
-  5: 'VVS- og Ventilationsanlæg',
-  6: 'El- og mekaniske anlæg',
-  7: 'Inventar og teknisk udstyr',
-  8: 'Beplantning og belægning',
-  9: 'Projektudstyr',
-};
-
-const BIM7AA_SUB = {
-  '0.1': 'Generiske bygningsdele',
-  '1.1': 'Fundering og terrændæk',
-  '1.2': 'Kælder og sokkel',
-  '2.1': 'Ydervægge',
-  '2.2': 'Indervægge',
-  '2.3': 'Dækkonstruktioner',
-  '2.4': 'Tagkonstruktioner',
-  '2.5': 'Søjler og dragere',
-  '3.1': 'Vinduer og yderdøre',
-  '3.2': 'Facadebeklædning',
-  '3.3': 'Lofter og altaner',
-  '4.1': 'Gulvbelægninger',
-  '4.2': 'Vægbeklædninger',
-  '4.3': 'Loftbeklædninger',
-  '4.4': 'Facadebeklædninger',
-  '5.1': 'Varmeanlæg',
-  '5.2': 'Ventilationsanlæg',
-  '5.3': 'Vand- og afløbsanlæg',
-  '5.4': 'Køleanlæg',
-  '6.1': 'Elinstallationer',
-  '6.2': 'IT og svagstrømsanlæg',
-  '6.3': 'Brand og sikringsanlæg',
-  '7.1': 'Inventar og udstyr',
-  '7.2': 'Løst inventar',
-  '7.3': 'Teknisk udstyr',
-  '8.1': 'Beplantning',
-  '8.2': 'Hårde belægninger',
-  '8.3': 'Udendørs udstyr',
-  '9.1': 'Projektudstyr',
-};
+import { BIM7AA, BIM7AA_SUB } from '../utils/bim7aa';
 
 const STATUS_NAMES = { 1: 'Aktiv', 2: 'Under review', 3: 'Godkendt' };
 const STATUS_MAP   = {

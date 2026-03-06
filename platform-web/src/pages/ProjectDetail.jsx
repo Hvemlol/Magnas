@@ -4,13 +4,7 @@ import PropTypes from 'prop-types';
 import api from '../services/api';
 import AddToProjectModal from '../components/AddToProjectModal';
 import AddElementToProjectModal from '../components/AddElementToProjectModal';
-
-const BIM7AA = {
-  0: 'Generiske objekter', 1: 'Bygningsbasis', 2: 'Primære bygningsdele',
-  3: 'Kompletterende bygningsdele', 4: 'Overfladebygningsdele',
-  5: 'VVS- og Ventilationsanlæg', 6: 'El- og mekaniske anlæg',
-  7: 'Inventar og teknisk udstyr', 8: 'Beplantning og belægning', 9: 'Projektudstyr',
-};
+import { BIM7AA } from '../utils/bim7aa';
 
 export default function ProjectDetail() {
   const { id } = useParams();
