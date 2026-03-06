@@ -115,6 +115,12 @@ export default function Elements() {
   });
   const [formError, setFormError] = useState('');
 
+  // Product search within create form
+  const [formProdSearch, setFormProdSearch]       = useState('');
+  const [formProdResults, setFormProdResults]     = useState([]);
+  const [formProdSearching, setFormProdSearching] = useState(false);
+  const [formSelProducts, setFormSelProducts]     = useState([]);
+
   // Expand / product preview
   const [expanded, setExpanded]         = useState(new Set());
   const [expandedData, setExpandedData] = useState({});
@@ -129,6 +135,18 @@ export default function Elements() {
     catch {}
     finally { setLoading(false); }
   }
+
+  useEffect(() => {
+    if (!formProdSearch.trim()) { setFormProdResults([]); return; }
+    const t = setTimeout(() => {
+      setFormProdSearching(true);
+      api.get(`/products?search=${encodeURIComponent(formProdSearch.trim())}`)
+        .then(res => setFormProdResults((res.data ?? []).slice(0, 8)))
+        .catch(() => {})
+        .finally(() => setFormProdSearching(false));
+    }, 300);
+    return () => clearTimeout(t);
+  }, [formProdSearch]);
 
   function setF(field) { return e => setForm(f => ({ ...f, [field]: e.target.value })); }
 
@@ -150,8 +168,17 @@ export default function Elements() {
         typeNumber:        form.typeNumber.trim() || null,
         status:            form.status ? parseInt(form.status) : null,
       });
-      setElements(prev => [res.data, ...prev]);
+      const newElement = res.data;
+      // Attach any pre-selected products
+      for (const p of formSelProducts) {
+        try { await api.post(`/elements/${newElement.id}/products`, { productId: p.id }); }
+        catch {}
+      }
+      setElements(prev => [{ ...newElement, productCount: formSelProducts.length }, ...prev]);
       setForm({ name: '', description: '', bim7aaCategory: '2', bim7aaSubcategory: '', typeNumber: '', status: '' });
+      setFormSelProducts([]);
+      setFormProdSearch('');
+      setFormProdResults([]);
       setShowForm(false);
     } catch (err) {
       setFormError(err.response?.data?.error ?? 'Failed to create element.');
@@ -331,10 +358,75 @@ export default function Elements() {
               <input style={s.input} value={form.description} onChange={setF('description')} placeholder="Optional" />
             </div>
           </div>
+          {/* Product search */}
+          <div style={s.prodSection}>
+            <div style={s.prodSectionLabel}>Add products</div>
+            <div style={s.prodSearchRow}>
+              <div style={{ position: 'relative', flex: 1 }}>
+                <input
+                  style={s.input}
+                  value={formProdSearch}
+                  onChange={e => setFormProdSearch(e.target.value)}
+                  placeholder="Search products…"
+                  autoComplete="off"
+                />
+                {formProdSearching && (
+                  <span style={s.prodSearchHint}>Searching…</span>
+                )}
+              </div>
+            </div>
+            {formProdResults.length > 0 && (
+              <div style={s.prodResults}>
+                {formProdResults.map(p => {
+                  const alreadyAdded = formSelProducts.some(sp => sp.id === p.id);
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      disabled={alreadyAdded}
+                      style={alreadyAdded ? s.prodResultAdded : s.prodResult}
+                      onClick={() => {
+                        if (!alreadyAdded) {
+                          setFormSelProducts(prev => [...prev, p]);
+                          setFormProdSearch('');
+                          setFormProdResults([]);
+                        }
+                      }}
+                    >
+                      <span style={s.prodResultName}>{p.name}</span>
+                      {p.category && <span style={s.prodResultMeta}>{p.category}</span>}
+                      {p.manufacturerName && <span style={s.prodResultMeta}>{p.manufacturerName}</span>}
+                      {alreadyAdded && <span style={s.prodResultMeta}>✓ added</span>}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+            {formSelProducts.length > 0 && (
+              <div style={s.prodChips}>
+                {formSelProducts.map(p => (
+                  <span key={p.id} style={s.prodChip}>
+                    {p.name}
+                    <button
+                      type="button"
+                      style={s.prodChipRemove}
+                      onClick={() => setFormSelProducts(prev => prev.filter(sp => sp.id !== p.id))}
+                    >✕</button>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
           {formError && <p style={s.err}>{formError}</p>}
           <div style={s.formBtns}>
             <button type="submit" style={s.submitBtn}>Create element</button>
-            <button type="button" style={s.cancelBtn} onClick={() => setShowForm(false)}>Cancel</button>
+            <button type="button" style={s.cancelBtn} onClick={() => {
+              setShowForm(false);
+              setFormSelProducts([]);
+              setFormProdSearch('');
+              setFormProdResults([]);
+            }}>Cancel</button>
           </div>
         </form>
       )}
@@ -923,6 +1015,20 @@ const s = {
   gwpChip:     { display: 'inline-block', padding: '1px 6px', fontSize: '0.76rem', fontWeight: 700, border: '1px solid currentColor' },
   noData:      { color: '#c0c0c0' },
   deleteBtn:   { borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#d4d0c8', cursor: 'pointer', color: '#000000', fontSize: '0.8rem', padding: '1px 5px', fontFamily: 'inherit' },
+
+  // Product search in create form
+  prodSection:     { borderTop: '1px solid #9a9790', marginTop: '12px', paddingTop: '12px' },
+  prodSectionLabel:{ fontSize: '0.75rem', fontWeight: 700, color: '#000000', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '8px' },
+  prodSearchRow:   { display: 'flex', gap: '8px', marginBottom: '6px' },
+  prodSearchHint:  { position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: '#808080', pointerEvents: 'none' },
+  prodResults:     { border: '1px solid #9a9790', background: '#ffffff', marginBottom: '8px' },
+  prodResult:      { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '5px 10px', border: 'none', borderBottom: '1px solid #e8e6e0', background: 'none', cursor: 'pointer', textAlign: 'left', fontFamily: 'inherit', fontSize: '0.85rem' },
+  prodResultAdded: { display: 'flex', alignItems: 'center', gap: '10px', width: '100%', padding: '5px 10px', border: 'none', borderBottom: '1px solid #e8e6e0', background: '#f0eeea', cursor: 'default', textAlign: 'left', fontFamily: 'inherit', fontSize: '0.85rem', color: '#808080' },
+  prodResultName:  { fontWeight: 600, color: '#000000', flexShrink: 0 },
+  prodResultMeta:  { fontSize: '0.78rem', color: '#808080' },
+  prodChips:       { display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '4px' },
+  prodChip:        { display: 'inline-flex', alignItems: 'center', gap: '5px', background: '#000080', color: '#ffffff', padding: '2px 8px', fontSize: '0.8rem', fontWeight: 600 },
+  prodChipRemove:  { background: 'none', border: 'none', color: '#ffffff', cursor: 'pointer', padding: '0 2px', fontSize: '0.78rem', lineHeight: 1, fontFamily: 'inherit' },
   sortActive:  { color: '#000000', marginLeft: '3px', fontSize: '0.68rem' },
   sortInactive:{ color: '#808080', marginLeft: '3px', fontSize: '0.68rem' },
 };
