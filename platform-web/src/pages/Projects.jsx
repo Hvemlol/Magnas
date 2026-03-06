@@ -20,7 +20,7 @@ export default function Projects() {
       ]);
       setProjects(projRes.data);
       setInvites(invRes.data);
-    } catch {}
+    } catch { setError('Failed to load your projects. Please refresh the page.'); }
     finally { setLoading(false); }
   }
 
@@ -120,6 +120,7 @@ export default function Projects() {
         </form>
       )}
 
+      {!loading && error && !showForm && <div style={s.error}>{error}</div>}
       {loading && <p style={s.msg}>Loading...</p>}
       {!loading && projects.length === 0 && !showForm && (
         <div style={s.empty}>

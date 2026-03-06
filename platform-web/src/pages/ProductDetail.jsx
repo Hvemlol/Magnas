@@ -30,7 +30,7 @@ export default function ProductDetail() {
           const match = res.data.find(s => s.product.id === parseInt(id));
           if (match) setSavedId(match.savedId);
         })
-        .catch(() => {});
+        .catch(() => console.error('Failed to load saved product status.'));
     }
   }, [user, id]);
 

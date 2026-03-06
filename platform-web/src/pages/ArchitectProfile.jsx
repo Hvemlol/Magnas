@@ -25,8 +25,9 @@ export default function ArchitectProfile() {
     try {
       const res = await api.get('/profile');
       setProfile(res.data);
-    } catch {}
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error('Failed to load architect profile:', err);
+    } finally { setLoading(false); }
   }
 
   function startEdit() {

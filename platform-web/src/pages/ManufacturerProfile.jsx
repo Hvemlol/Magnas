@@ -27,7 +27,7 @@ export default function ManufacturerProfile() {
           res.data.forEach(s => { map[s.product.id] = s.savedId; });
           setSaved(map);
         })
-        .catch(() => {});
+        .catch(() => console.error('Failed to load saved product status.'));
     }
   }, [user]);
 

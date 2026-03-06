@@ -37,7 +37,8 @@ export default function AddElementToProjectModal({
   // Load projects list (element-first mode)
   useEffect(() => {
     if (isElementFirst) {
-      api.get('/projects').then(res => setProjects(res.data)).catch(() => {});
+      api.get('/projects').then(res => setProjects(res.data))
+        .catch(() => setError('Failed to load your projects. Please close and try again.'));
     }
   }, [isElementFirst]);
 
@@ -47,7 +48,7 @@ export default function AddElementToProjectModal({
     setLoadingGroups(true);
     api.get(`/projects/${selProjectId}`)
       .then(res => setSelGroups(res.data.groups ?? []))
-      .catch(() => setSelGroups([]))
+      .catch(() => { setSelGroups([]); setError('Failed to load project subgroups. Please reselect the project.'); })
       .finally(() => setLoadingGroups(false));
   }, [selProjectId, isElementFirst]);
 
@@ -55,13 +56,14 @@ export default function AddElementToProjectModal({
   useEffect(() => {
     if (isElementFirst || !search.trim()) { setSearchResults([]); return; }
     const t = setTimeout(() => {
+      setError('');
       setSearching(true);
       api.get('/elements')
         .then(res => {
           const q = search.trim().toLowerCase();
           setSearchResults((res.data ?? []).filter(e => e.name.toLowerCase().includes(q)).slice(0, 8));
         })
-        .catch(() => {})
+        .catch(() => setError('Search failed. Please try again.'))
         .finally(() => setSearching(false));
     }, 200);
     return () => clearTimeout(t);

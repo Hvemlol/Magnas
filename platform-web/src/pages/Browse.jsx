@@ -29,6 +29,7 @@ export default function Browse() {
   const [allProducts, setAllProducts] = useState([]);
   const [saved, setSaved]             = useState({});
   const [loading, setLoading]         = useState(true);
+  const [loadError, setLoadError]     = useState('');
   const [busyId, setBusyId]           = useState(null);
   const [modalProduct, setModalProduct] = useState(null); // product to add to a project
 
@@ -61,7 +62,7 @@ export default function Browse() {
   useEffect(() => {
     api.get('/products')
       .then(res => setAllProducts(res.data))
-      .catch(() => {})
+      .catch(() => setLoadError('Failed to load products. Please refresh the page.'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -74,7 +75,7 @@ export default function Browse() {
           res.data.forEach(s => { map[s.product.id] = s.savedId; });
           setSaved(map);
         })
-        .catch(() => {});
+        .catch(() => console.error('Failed to load saved product status.'));
     }
   }, [user]);
 
@@ -292,7 +293,10 @@ export default function Browse() {
           </div>
 
           {/* States */}
-          {!loading && allProducts.length === 0 && (
+          {!loading && loadError && (
+            <p style={s.loadError}>{loadError}</p>
+          )}
+          {!loading && !loadError && allProducts.length === 0 && (
             <p style={s.msg}>No products available yet.</p>
           )}
           {!loading && allProducts.length > 0 && products.length === 0 && (
@@ -417,6 +421,7 @@ const s = {
   resultsBar:      { display: 'flex', alignItems: 'center', marginBottom: '8px' },
   resultCount:     { fontSize: '0.82rem', color: '#808080' },
   msg:             { color: '#808080', marginTop: '40px', textAlign: 'center' },
+  loadError:       { color: '#c00000', background: '#ffe0e0', border: '1px solid #c62828', padding: '10px 14px', marginTop: '20px', fontSize: '0.88rem' },
   noResults:       { textAlign: 'center', padding: '40px 0', color: '#808080' },
   noResultsBtn:    { marginTop: '10px', padding: '5px 16px', borderTop: '2px solid #ffffff', borderLeft: '2px solid #ffffff', borderRight: '2px solid #808080', borderBottom: '2px solid #808080', background: '#d4d0c8', cursor: 'pointer', fontSize: '0.85rem', fontFamily: 'inherit' },
 

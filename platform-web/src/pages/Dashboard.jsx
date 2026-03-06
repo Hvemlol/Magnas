@@ -41,7 +41,8 @@ export default function Dashboard() {
   useEffect(() => { loadProducts(); loadProfile(); }, []);
 
   async function loadProducts() {
-    try { setProducts((await api.get('/products/mine')).data); } catch {}
+    try { setProducts((await api.get('/products/mine')).data); }
+    catch { setProdError('Failed to load your products. Please refresh the page.'); }
   }
   function set(field) { return e => setForm(f => ({ ...f, [field]: e.target.value })); }
 

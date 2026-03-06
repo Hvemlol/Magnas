@@ -92,6 +92,7 @@ export default function Elements() {
   const navigate = useNavigate();
   const [elements, setElements] = useState([]);
   const [loading, setLoading]   = useState(true);
+  const [loadError, setLoadError] = useState('');
 
   // Filters
   const [filterCat, setFilterCat]             = useState(null);
@@ -126,7 +127,7 @@ export default function Elements() {
 
   async function load() {
     try { setElements((await api.get('/elements')).data); }
-    catch {}
+    catch { setLoadError('Failed to load elements. Please refresh the page.'); }
     finally { setLoading(false); }
   }
 
@@ -267,7 +268,8 @@ export default function Elements() {
 
   const subcats = getSubcats(parseInt(form.bim7aaCategory));
 
-  if (loading) return <div style={s.state}>Loading…</div>;
+  if (loading)   return <div style={s.state}>Loading…</div>;
+  if (loadError) return <div style={s.state}>{loadError}</div>;
 
   return (
     <div style={s.page}>
