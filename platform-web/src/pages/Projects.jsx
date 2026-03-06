@@ -28,7 +28,7 @@ export default function Projects() {
 
   async function handleCreate(e) {
     e.preventDefault();
-    if (!form.name.trim()) return;
+    if (!form.name.trim()) { setError('Project name is required.'); return; }
     setError('');
     try {
       const res = await api.post('/projects', form);

@@ -61,7 +61,7 @@ export default function ProjectDetail() {
     setEditingHeader(true);
   }
   async function saveHeader() {
-    if (!headerForm.name.trim()) return;
+    if (!headerForm.name.trim()) { setActionError('Project name is required.'); return; }
     try {
       const res = await api.put(`/projects/${id}`, headerForm);
       setProject(p => ({ ...p, name: res.data.name, description: res.data.description, location: res.data.location }));
@@ -82,7 +82,7 @@ export default function ProjectDetail() {
   }
 
   async function renameGroup(groupId) {
-    if (!renameValue.trim()) return;
+    if (!renameValue.trim()) { setActionError('Group name is required.'); return; }
     try {
       const res = await api.put(`/projects/${id}/groups/${groupId}`, { name: renameValue.trim() });
       setProject(p => ({ ...p, groups: p.groups.map(g => g.id === groupId ? { ...g, name: res.data.name } : g) }));
