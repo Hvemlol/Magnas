@@ -18,7 +18,7 @@ import ArchitectProfile from './pages/ArchitectProfile';
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <BrowserRouter basename="/Magnas">
         <Navbar />
         <Routes>
           <Route path="/" element={<Browse />} />
