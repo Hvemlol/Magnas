@@ -541,4 +541,5 @@ app.UseAuthorization();
 
 app.MapControllers();
 
-app.Run("http://localhost:5000");
+var port = Environment.GetEnvironmentVariable("PORT") ?? "5000";
+app.Run($"http://0.0.0.0:{port}");
