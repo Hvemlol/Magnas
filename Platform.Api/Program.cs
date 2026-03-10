@@ -88,7 +88,9 @@ builder.Services.AddRateLimiter(options =>
             }));
 });
 
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(opts =>
+        opts.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter()));
 builder.Services.AddEndpointsApiExplorer();
 
 // Swagger with JWT support
@@ -157,7 +159,7 @@ using (var scope = app.Services.CreateScope())
         }
 
         // ── Demo accounts ─────────────────────────────────────
-        var architect = MakeUser("architect@demo.com", "demo_architect", Platform.Api.Models.UserRole.Architect,
+        var architect = MakeUser("demo@architect.com", "demo_architect", Platform.Api.Models.UserRole.Architect,
             null, null, null, null, null, 10);
 
         // ── Manufacturers ──────────────────────────────────────
